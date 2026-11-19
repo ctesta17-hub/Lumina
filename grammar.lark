@@ -1,0 +1,132 @@
+start       : item+
+?item       : function
+            | global_var
+
+global_var  : var_decl
+var_decl    : type declarator (_COMMA declarator)* _SEMI
+declarator  : IDENTIFIER [_ASSIGN expression]
+
+function    : type IDENTIFIER params block
+params      : _LPAREN (param (_COMMA param)*)? _RPAREN
+param       : type IDENTIFIER
+block       : _LBRACE statement* _RBRACE
+
+?statement  : var_decl
+            | expression _SEMI -> expr_stmt
+            | if_stmt
+            | iter_stmt
+            | jump_stmt
+            | block
+            | _SEMI -> empty_stmt
+
+condition   : _LPAREN expression _RPAREN
+if_stmt     : _KW_IF condition block [_KW_ELSE (block | if_stmt)]
+
+?iter_stmt  : while_stmt
+            | do_while_stmt
+            | for_stmt
+while_stmt  : _KW_WHILE condition block
+do_while_stmt : _KW_DO block _KW_WHILE condition _SEMI
+for_stmt    : _KW_FOR _LPAREN [for_init] _SEMI [expression] _SEMI [expression] _RPAREN block 
+for_init    : type declarator   -> for_decl
+            | expression        -> for_expr
+
+?jump_stmt  : ret_stmt
+            | br_stmt
+            | cnt_stmt
+ret_stmt    : _KW_RETURN [expression] _SEMI
+br_stmt     : _KW_BREAK _SEMI
+cnt_stmt    : _KW_CONTINUE _SEMI
+
+type        : _KW_VOID      -> t_void
+            | _KW_INT       -> t_int
+            | _KW_LONG      -> t_long
+            | _KW_SHORT     -> t_short
+            | _KW_FLOAT     -> t_float
+            | _KW_DOUBLE    -> t_double
+            | _KW_CHAR      -> t_char
+            | _KW_STRING    -> t_string
+
+
+?expression : assignment
+?assignment : or_expr _ASSIGN assignment        -> assign
+            | or_expr
+?or_expr    : or_expr _OROR and_expr            -> lor
+            | and_expr
+?and_expr   : and_expr _ANDAND eq_expr          -> land
+            | eq_expr
+?eq_expr    : eq_expr EQOP rel_expr             -> binop
+            | rel_expr
+?rel_expr   : rel_expr RELOP add_expr           -> binop
+            | add_expr
+?add_expr   : add_expr ADDOP mul_expr           -> binop
+            | mul_expr
+?mul_expr   : mul_expr MULOP unary              -> binop
+            | unary
+?unary      : ADDOP unary                       -> unary_arith
+            | _NOT unary                        -> lnot
+            | _LPAREN type _RPAREN unary        -> cast
+            | postfix
+?postfix    : IDENTIFIER _LPAREN [args] _RPAREN -> call
+            | primary
+?primary    : FLOAT_LIT                         -> float_lit
+            | INT_LIT                           -> int_lit
+            | CHAR_LIT                          -> char_lit
+            | STRING_LIT                        -> string_lit
+            | IDENTIFIER                        -> var
+            | _LPAREN expression _RPAREN
+args        : expression (_COMMA expression)*
+
+//Parole chiavi
+_KW_IF      : "if"
+_KW_ELSE    : "else"
+_KW_WHILE   : "while"
+_KW_DO      : "do"
+_KW_FOR     : "for"
+_KW_RETURN  : "return"
+_KW_BREAK   : "break"
+_KW_CONTINUE: "continue"
+_KW_VOID    : "void"
+_KW_CHAR    : "char"
+_KW_STRING  : "string"
+_KW_SHORT   : "short"
+_KW_INT     : "int"
+_KW_LONG    : "long"
+_KW_FLOAT   : "float"
+_KW_DOUBLE  : "double"
+
+//Letterali e identificatori
+FLOAT_LIT   : /[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?/
+INT_LIT     : /[0-9]+/
+STRING_LIT  : /"([^"\\\n]|\\.)*"/
+CHAR_LIT    : /'(\\.|[^\\'\n])'/
+IDENTIFIER  : /[A-Za-z_][A-Za-z0-9_]*/
+
+//Operazioni    
+EQOP        : "==" | "!="
+RELOP       : "<=" | ">=" | "<" | ">"
+ADDOP       : "+" | "-"
+MULOP       : "*" | "/" | "%"
+_OROR       : "||"
+_ANDAND     : "&&"
+_NOT        : "!"
+_ASSIGN     : "="
+
+//Punteggiatura
+_LPAREN     : "("
+_RPAREN     : ")"
+_LBRACE     : "{"
+_RBRACE     : "}"
+//_LBRACK     : "["
+//_RBRACK     : "]"
+_COMMA      : ","
+//_COLON      : ":"
+_SEMI       : ";"
+//_DOT        : "."
+
+//ANY_CHAR.0 : /[\s\S]/
+
+
+%ignore /\s+/ //ignora spazi bianchi
+%ignore /\/\/[^\n]*/ //ignora commenti inline 
+%ignore /\/\*[\S\s]*?\*\// //ignora i commenti multilinea. *? serve a fermarsi al primo */
