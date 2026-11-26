@@ -1,11 +1,9 @@
 start       : item+
 ?item       : function
             | global_var
-
 global_var  : var_decl
 var_decl    : type declarator (_COMMA declarator)* _SEMI
 declarator  : IDENTIFIER [_ASSIGN expression]
-
 function    : type IDENTIFIER params block
 params      : _LPAREN (param (_COMMA param)*)? _RPAREN
 param       : type IDENTIFIER
@@ -17,7 +15,12 @@ block       : _LBRACE statement* _RBRACE
             | iter_stmt
             | jump_stmt
             | block
+            | read_stmt
+            | write_stmt
             | _SEMI -> empty_stmt
+
+read_stmt   : _KW_READ IDENTIFIER _SEMI
+write_stmt  : _KW_WRITE expression _SEMI
 
 condition   : _LPAREN expression _RPAREN
 if_stmt     : _KW_IF condition block [_KW_ELSE (block | if_stmt)]
@@ -86,6 +89,8 @@ _KW_FOR     : "for"
 _KW_RETURN  : "return"
 _KW_BREAK   : "break"
 _KW_CONTINUE: "continue"
+_KW_READ    : "read"
+_KW_WRITE   : "write"
 _KW_VOID    : "void"
 _KW_CHAR    : "char"
 _KW_STRING  : "string"
@@ -125,7 +130,6 @@ _SEMI       : ";"
 //_DOT        : "."
 
 //ANY_CHAR.0 : /[\s\S]/
-
 
 %ignore /\s+/ //ignora spazi bianchi
 %ignore /\/\/[^\n]*/ //ignora commenti inline 
